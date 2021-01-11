@@ -20,5 +20,5 @@ aes = AES256Crypto(SECRET_KEY, iv=FIRST_IV)
 DATABASE_PASSWORD = "j9IAL+3pyaa77YT92NGFTg=="
 
 DATABASE_URI = (
-    "mysql+pymysql://root:@%s@localhost:3306/walle?charset=utf8".format(aes.decrypt(DATABASE_PASSWORD, decode=base64.b64decode))
+    "mysql+pymysql://root:%s@localhost:3306/walle?charset=utf8"%aes.decrypt(DATABASE_PASSWORD, decode=base64.b64decode)
 )

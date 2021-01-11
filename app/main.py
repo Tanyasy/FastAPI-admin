@@ -5,10 +5,13 @@ from fastapi import FastAPI
 from starlette.requests import Request
 
 from core import config
-from app.db.session import Session
+from app.db.session import Session, engine
+from app.api.api_v1 import api_router
+from app.db.base_class import Base
 
-
+Base.metadata.create_all(bind=engine)
 app = FastAPI(title=config.PROJECT_NAME, openapi_url="/api/v1/openapi.json")
+app.include_router(api_router, prefix=config.API_V1_STR)
 
 
 @app.middleware("http")
