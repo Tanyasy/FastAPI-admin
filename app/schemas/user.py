@@ -13,7 +13,7 @@ class UserBase(BaseModel):
 
 
 class UserBaseInDB(UserBase):
-    id: int = None
+    id: str = None
     create_time: datetime = None
     update_time: datetime = None
 

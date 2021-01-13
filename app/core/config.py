@@ -22,3 +22,6 @@ DATABASE_PASSWORD = "j9IAL+3pyaa77YT92NGFTg=="
 DATABASE_URI = (
     "mysql+pymysql://root:%s@localhost:3306/walle"%aes.decrypt(DATABASE_PASSWORD, decode=base64.b64decode)
 )
+
+# jwt
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 60 minutes * 24 hours * 8 days = 8 days

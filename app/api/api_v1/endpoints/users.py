@@ -44,7 +44,7 @@ async def create_user(
     :param user_in: 输入参数
     :return:
     """
-    user = crud.user.get_by_email(db, email=user_in.email)
+    user = crud.user.get_by_name(db, user_name=user_in.name)
     if user:
         raise HTTPException(
             status_code=400,
