@@ -18,7 +18,7 @@ async def login_access_token(
         db: Session = Depends(get_db),
         form_data: OAuth2PasswordRequestForm = Depends()
 ):
-    user = crud.user.authenticate(db, form_data.username, form_data.password)
+    user = crud.user.authenticate(db, user_name=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     elif not crud.user.is_active(user):

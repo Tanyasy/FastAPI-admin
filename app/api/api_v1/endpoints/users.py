@@ -28,7 +28,7 @@ async def get_users(
     :param limit: 数据限制
     :return: 用户列表
     """
-    users = crud.user.get_multi(db, skip, limit)
+    users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
 # 第一个参数为*，则后面参数都为位置参数，不管有没有默认值

@@ -1,9 +1,11 @@
 import os
 import sys
+
 sys.path.append(os.getcwd())
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
 from core import config
@@ -14,6 +16,21 @@ from app.db.base_class import Base
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title=config.PROJECT_NAME, openapi_url="/api/v1/openapi.json")
 app.include_router(api_router, prefix=config.API_V1_STR)
+
+# 信任域
+origins = [
+    "http://localhost",
+    "http://localhost:8081"
+]
+
+# 后台api允许跨域
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 
 @app.exception_handler(RequestValidationError)
@@ -49,4 +66,5 @@ async def db_session_middleware(request: Request, call_next):
 
 if __name__ == '__main__':
     import uvicorn
+
     uvicorn.run(app, port=config.PORT)
