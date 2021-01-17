@@ -8,7 +8,7 @@ from app.api.utils.db import get_db
 from app.schemas.token import Token, TokenPayload
 from app import crud
 from app.core import config
-from app.core.jwt import create_access_token
+from app.core.jwt_utils import create_access_token
 
 router = APIRouter()
 
