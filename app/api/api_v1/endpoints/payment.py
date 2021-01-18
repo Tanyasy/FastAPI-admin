@@ -35,6 +35,6 @@ def create_payments(
     Create new item.
     """
     payments = crud.payment.create_multi_by_owner(
-        db_session=db, obj_in=PaymentCreate, owner_id=current_user.id
+        db_session=db, obj_in=payment_list, owner_id=current_user.id
     )
     return payments

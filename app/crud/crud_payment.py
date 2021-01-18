@@ -21,9 +21,9 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
     def create_multi_by_owner(self, db_session: Session, *, obj_in: List[PaymentCreate], owner_id: str) -> List[Payment]:
         obj_list_in_data = jsonable_encoder(obj_in)
         db_obj_list = [self.model(**obj_in_data, user_id=owner_id) for obj_in_data in obj_list_in_data]
-        db_session.add(db_obj_list)
+        db_session.add_all(db_obj_list)
+        db_session.flush()
         db_session.commit()
-        db_session.refresh(db_obj_list)
         return db_obj_list
 
 payment = CRUBPayment(Payment)

@@ -13,7 +13,7 @@ class PaymentBase(BaseModel):
     counter_party: Optional[str] = None
     payment: Optional[str] = None
     product_name: Optional[str] = None
-    trade_sources: Optional[str] = None
+    trade_sources: Optional[str] = ""
 
 
 class PaymentCreate(PaymentBase):
@@ -29,7 +29,7 @@ class PaymentInDB(PaymentBase):
     id: str
     create_time: datetime = None
     update_time: datetime = None
-    trade_type: Optional[str] = None
+    trade_type: Optional[str] = ""
     user_id: Optional[str] = None
 
     class Config:

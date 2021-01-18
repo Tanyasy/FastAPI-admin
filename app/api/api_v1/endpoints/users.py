@@ -1,12 +1,13 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.core import config
 from app.models.user import User as DBUser
 from app.schemas.user import User, UserCreate
+from app.schemas.reponse import Response
 from app import crud
 
 
@@ -15,7 +16,7 @@ router = APIRouter()
 
 
 # 通过response_model来设置响应模型，可以将对象转化成json数据返回
-@router.get("/", response_model=List[User])
+@router.get("/", response_model=Response)
 async def get_users(
         db: Session = Depends(get_db),
         skip: int = 0,
@@ -29,7 +30,13 @@ async def get_users(
     :return: 用户列表
     """
     users = crud.user.get_multi(db, skip=skip, limit=limit)
-    return users
+
+    return {
+        "status": status.HTTP_200_OK,
+        "total": len(users),
+        "data": users,
+        "msg": "ok"
+    }
 
 # 第一个参数为*，则后面参数都为位置参数，不管有没有默认值
 @router.post("/", response_model=User)
