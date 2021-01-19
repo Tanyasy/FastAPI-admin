@@ -1,11 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-
-# 查询响应数据
-
-# 插入数据库需要的数据
 
 # 更新数据需要的数据类型
 class PaymentBase(BaseModel):
@@ -17,12 +13,14 @@ class PaymentBase(BaseModel):
 
 
 class PaymentCreate(PaymentBase):
-    pass
+    create_time: datetime = None
+    update_time: datetime = None
+    trade_type: Optional[str] = ""
 
 
 class PaymentUpdate(PaymentBase):
     user_id: Optional[str] = None
-    trade_type: Optional[str] = None
+    trade_type: Optional[str] = ""
 
 
 class PaymentInDB(PaymentBase):
@@ -36,5 +34,5 @@ class PaymentInDB(PaymentBase):
         orm_mode = True
 
 
-class Payment(PaymentBase):
+class Payment(PaymentInDB):
     pass
