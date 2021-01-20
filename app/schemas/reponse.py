@@ -9,3 +9,10 @@ class Response(BaseModel):
     msg: str = ""
     data: List[T]
     total: int = 0
+
+
+class PageResponse(BaseModel):
+    status: int
+    count: int = 0
+    data: List[T]
+    total_page: int = 1
