@@ -25,3 +25,7 @@ DATABASE_URI = (
 
 # jwt
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 60 minutes * 24 hours * 8 days = 8 days
+
+# upload file
+UPLOAD_PATH = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), "download")
+ACCEPT_FILE_TYPE = ["xls", "csv"]
