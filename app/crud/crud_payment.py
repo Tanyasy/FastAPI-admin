@@ -1,8 +1,10 @@
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
+import pandas as pd
 
 from app.crud.base import CRUDBase
 from app.models.payment import Payment
@@ -11,11 +13,13 @@ from app.schemas.payment import PaymentCreate, PaymentUpdate
 
 class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
 
-    def get_multi_by_owner(self, db_session: Session, *, start_time: datetime=None, end_time: datetime=None, owner_id: str) -> List[Payment]:
+    def get_multi_by_owner(self, db_session: Session, *, start_time: datetime = None, end_time: datetime = None,
+                           owner_id: str) -> List[Payment]:
         if start_time:
             return (
                 db_session.query(self.model)
-                    .filter(and_(Payment.user_id == owner_id, Payment.create_time.between(str(start_time), str(end_time))))
+                    .filter(
+                    and_(Payment.user_id == owner_id, Payment.create_time.between(str(start_time), str(end_time))))
                     .order_by(Payment.create_time.desc())
                     .all()
             )
@@ -23,17 +27,65 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             # 默认按时间降序排序，要在limit和offset之前，不然会报错
             return (
                 db_session.query(self.model)
-                .filter(and_(Payment.user_id == owner_id, Payment.create_time <= str(end_time)))
-                .order_by(Payment.create_time.desc())
-                .all()
+                    .filter(and_(Payment.user_id == owner_id, Payment.create_time <= str(end_time)))
+                    .order_by(Payment.create_time.desc())
+                    .all()
             )
 
-    def create_multi_by_owner(self, db_session: Session, *, obj_in: List[PaymentCreate], owner_id: str) -> List[Payment]:
+    def create_multi_by_owner(self, db_session: Session, *, obj_in: List[PaymentCreate], owner_id: str) -> List[
+        Payment]:
         obj_list_in_data = jsonable_encoder(obj_in)
         db_obj_list = [self.model(**obj_in_data, user_id=owner_id) for obj_in_data in obj_list_in_data]
-        db_session.add_all(db_obj_list)
-        db_session.flush()
-        db_session.commit()
-        return db_obj_list
+        try:
+            db_session.add_all(db_obj_list)
+            db_session.flush()
+            db_session.commit()
+            return db_obj_list
+        except IntegrityError as e:
+            db_session.rollback()
+            return []
+
+    @staticmethod
+    def parse_xml_data(file_path: str, data_source: str) -> List[PaymentCreate]:
+
+        data: list = []
+        if data_source == "alipay":
+            data_frame: pd.DataFrame = pd.read_csv(file_path, encoding="GBK")
+            data_frame = data_frame.rename(columns=lambda x: x.strip())
+            # 筛选冗余数据
+            format_data: pd.DataFrame = data_frame[
+                (data_frame["收/支"].apply(lambda x: not str(x).isspace())) & (data_frame["成功退款（元）"] == 0)]
+
+            for index, row in format_data.iterrows():
+                data.append({
+                    "money": row["金额（元）"],
+                    "counter_party": row["交易对方"].strip(),
+                    "payment": row["收/支"].strip(),
+                    "product_name": row["商品名称"].strip(),
+                    "trade_sources": row["交易来源地"].strip(),
+                    "trade_number": row["交易号"].strip(),
+                    "create_time": row["交易创建时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
+                    "update_time": row["最近修改时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
+                })
+
+        elif data_source == "weixinpay":
+            data_frame: pd.DataFrame = pd.read_csv(file_path)
+            data_frame = data_frame.rename(columns=lambda x: x.strip())
+            # 筛选冗余数据
+            format_data: pd.DataFrame = data_frame[(data_frame["收/支"].apply(lambda x: str(x) != "/"))]
+
+            for index, row in format_data.iterrows():
+                data.append({
+                    "money": float(row["金额(元)"].replace("¥", "")),
+                    "counter_party": row["交易对方"].strip(),
+                    "payment": row["收/支"].strip(),
+                    "product_name": row["商品"].strip(),
+                    "trade_sources": row["支付方式"].strip(),
+                    "trade_number": row["交易单号"].strip(),
+                    "create_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
+                    "update_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
+                })
+        return data
+
 
 payment = CRUBPayment(Payment)

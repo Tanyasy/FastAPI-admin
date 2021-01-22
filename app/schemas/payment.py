@@ -10,6 +10,7 @@ class PaymentBase(BaseModel):
     payment: Optional[str] = None
     product_name: Optional[str] = None
     trade_sources: Optional[str] = ""
+    trade_number: Optional[str] = ""
 
 
 class PaymentCreate(PaymentBase):

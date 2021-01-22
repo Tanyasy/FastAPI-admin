@@ -46,6 +46,7 @@ async def create_file(
 async def import_data(
         db: Session = Depends(get_db),
         file_name: str = Body(..., embed=True),
+        data_source: str = Body(..., embed=True),
         current_user: DBUser = Depends(get_current_active_user)
 ):
     file_path = os.path.join(config.UPLOAD_PATH, file_name)
@@ -54,29 +55,8 @@ async def import_data(
             status_code=400,
             detail=f"The file is not exists.",
         )
-    data_frame: pd.DataFrame = pd.read_csv(file_path, encoding="GBK")
 
-    data_frame = data_frame.rename(columns=lambda x: x.strip())
-
-    for item in data_frame:
-        print(f"=={item}==")
-    # 筛选冗余数据
-    format_data: pd.DataFrame = data_frame[
-        (data_frame["收/支"].apply(lambda x: not str(x).isspace())) & (data_frame["成功退款（元）"] == 0)]
-
-    data: list = []
-    for index, row in format_data.iterrows():
-        data.append({
-            "money": row["金额（元）"],
-            "counter_party": row["交易对方"].strip(),
-            "payment": row["收/支"].strip(),
-            "product_name": row["商品名称"].strip(),
-            "trade_sources": row["交易来源地"].strip(),
-            # "create_time": datetime.strptime(row["交易创建时间"].strip(),'%Y/%m/%d %H:%M'),
-            # "update_time": datetime.strptime(row["最近修改时间"].strip(),'%Y/%m/%d %H:%M'),
-            "create_time": row["交易创建时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
-            "update_time": row["最近修改时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
-        })
+    data = crud.payment.parse_xml_data(file_path, data_source)
 
     payments = crud.payment.create_multi_by_owner(
         db_session=db, obj_in=data, owner_id=current_user.id
