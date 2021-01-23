@@ -8,7 +8,7 @@ from app import crud
 from app.api.utils.db import get_db
 from app.api.utils.session import get_current_active_user
 from app.schemas.payment import Payment, PaymentCreate, PaymentUpdate
-from app.schemas.reponse import PageResponse
+from app.schemas.reponse import PageResponse, Response
 from app.models.user import User as DBUser
 from app.api.utils.page import pagination
 from app.core import config
@@ -99,6 +99,28 @@ def create_payments(
     return payments
 
 
+@router.put("/", response_model=Response)
+def create_payments(
+        *,
+        db: Session = Depends(get_db),
+        payment_list: List[PaymentUpdate],
+        current_user: DBUser = Depends(get_current_active_user),
+):
+    """
+    Update payments.
+    """
+    logger.info(f"{current_user.name} start to update payments...")
+    data = crud.payment.update_multi(
+        db_session=db, obj_in=payment_list
+    )
+    return {
+        "status": 200,
+        "msg": "success",
+        "data": data,
+        "total": len(data)
+    }
+
+
 @router.delete("/{id}", response_model=Payment)
 def delete_item(
         *,
@@ -109,8 +131,10 @@ def delete_item(
     """
     Delete an item.
     """
-    item = crud.payment.get(db_session=db, id=id)
+    item: Payment = crud.payment.get(db_session=db, id=id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     item = crud.payment.remove(db_session=db, id=id)
+    logger.info(f"{current_user.name} delete {item.product_name} success...")
     return item

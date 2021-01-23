@@ -20,6 +20,7 @@ class PaymentCreate(PaymentBase):
 
 
 class PaymentUpdate(PaymentBase):
+    id: str
     user_id: Optional[str] = None
     trade_type: Optional[str] = ""
 

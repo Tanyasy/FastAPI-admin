@@ -45,6 +45,19 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             db_session.rollback()
             return []
 
+    def update_multi(
+            self,
+            db_session:Session,
+            *,
+            obj_in: List[PaymentUpdate]
+    ):
+        obj_data = jsonable_encoder(obj_in)
+        print(obj_data)
+        db_session.bulk_update_mappings(self.model, obj_data)
+        db_session.flush()
+        db_session.commit()
+        return obj_data
+
     @staticmethod
     def parse_xml_data(file_path: str, data_source: str) -> List[PaymentCreate]:
 
