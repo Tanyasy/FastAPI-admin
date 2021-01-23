@@ -8,3 +8,4 @@ passlib==1.7.4
 pyjwt==2.0.0
 python-multipart==0.0.5
 email-validator==1.1.2
+loguru==0.5.3

@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-import pandas as pd
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Body
 from typing import List, Optional
 
@@ -13,14 +12,17 @@ from app.schemas.reponse import PageResponse
 from app.models.user import User as DBUser
 from app.api.utils.page import pagination
 from app.core import config
+from app.core.logger import logger
 
 router = APIRouter()
 
 
 @router.post("/file/")
 async def create_file(
-        file: UploadFile = File(...)
+        file: UploadFile = File(...),
+        current_user: DBUser = Depends(get_current_active_user)
 ):
+    logger.info(f"{current_user.name} upload file {file.filename}...")
     file_path = os.path.join(config.UPLOAD_PATH, file.filename)
     if file_path.split(".")[-1] not in config.ACCEPT_FILE_TYPE:
         raise HTTPException(
@@ -76,6 +78,7 @@ async def get_payments(
         end_time: datetime = datetime.today(),
         current_user: DBUser = Depends(get_current_active_user)
 ):
+    logger.info(f"{current_user.name} start to get payments...")
     records = crud.payment.get_multi_by_owner(db, start_time=start_time, end_time=end_time, owner_id=current_user.id)
     return pagination(records, page, limit)
 
