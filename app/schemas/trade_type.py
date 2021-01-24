@@ -5,7 +5,7 @@ from datetime import datetime
 class TradeTypeBase(BaseModel):
 
     type_name: str = Field(..., max_length=8)
-    type_flag: int = Field(..., gt=0, lt=100)
+    type_flag: int = Field(..., gt=0, lt=1000)
 
 
 class TradeTypeCreate(TradeTypeBase):

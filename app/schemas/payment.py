@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Union
 from datetime import datetime
+from .trade_type import TradeType
 
 
 # 更新数据需要的数据类型
@@ -31,6 +32,7 @@ class PaymentInDB(PaymentBase):
     update_time: datetime = None
     trade_type: Optional[str] = ""
     user_id: Optional[str] = None
+    type: TradeType = None
 
     class Config:
         orm_mode = True

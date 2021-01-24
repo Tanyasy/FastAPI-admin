@@ -76,10 +76,20 @@ async def get_payments(
         limit: int = 100,
         start_time: Optional[datetime] = None,
         end_time: datetime = datetime.today(),
+        counter_party: Optional[str] = None,
+        product_name: Optional[str] = None,
         current_user: DBUser = Depends(get_current_active_user)
 ):
     logger.info(f"{current_user.name} start to get payments...")
-    records = crud.payment.get_multi_by_owner(db, start_time=start_time, end_time=end_time, owner_id=current_user.id)
+    records = crud.payment.get_multi_by_owner(
+        db,
+        start_time=start_time,
+        end_time=end_time,
+        counter_party=counter_party,
+        product_name=product_name,
+        owner_id=current_user.id
+    )
+
     return pagination(records, page, limit)
 
 

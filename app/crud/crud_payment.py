@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only, joinedload
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from fastapi.encoders import jsonable_encoder
@@ -8,29 +8,44 @@ import pandas as pd
 
 from app.crud.base import CRUDBase
 from app.models.payment import Payment
+from app.models.trade_type import TradeType
 from app.schemas.payment import PaymentCreate, PaymentUpdate
 
 
 class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
 
-    def get_multi_by_owner(self, db_session: Session, *, start_time: datetime = None, end_time: datetime = None,
-                           owner_id: str) -> List[Payment]:
+    def get_multi_by_owner(
+            self,
+            db_session: Session,
+            *,
+            start_time: datetime = None,
+            end_time: datetime = None,
+            counter_party: str = None,
+            product_name: str = None,
+            owner_id: str
+    ) -> List[Payment]:
+
+        # 根据传入的参数有无添加不同的过滤条件
+        filter_conditions: list = [Payment.user_id == owner_id]
         if start_time:
-            return (
-                db_session.query(self.model)
-                    .filter(
-                    and_(Payment.user_id == owner_id, Payment.create_time.between(str(start_time), str(end_time))))
-                    .order_by(Payment.create_time.desc())
-                    .all()
-            )
-        else:
-            # 默认按时间降序排序，要在limit和offset之前，不然会报错
-            return (
-                db_session.query(self.model)
-                    .filter(and_(Payment.user_id == owner_id, Payment.create_time <= str(end_time)))
-                    .order_by(Payment.create_time.desc())
-                    .all()
-            )
+            filter_conditions.append(Payment.create_time >= str(start_time))
+
+        if end_time:
+            filter_conditions.append(Payment.create_time <= str(end_time))
+
+        if counter_party:
+            filter_conditions.append(Payment.counter_party.like(f"%{counter_party}%"))
+
+        if product_name:
+            filter_conditions.append(Payment.product_name.like(f"%{product_name}%"))
+
+        # 默认按时间降序排序，要在limit和offset之前，不然会报错
+        return (
+            db_session.query(self.model).options(joinedload("type").load_only("type_name", "type_flag"))
+                .filter(and_(*filter_conditions))
+                .order_by(Payment.create_time.desc())
+                .all()
+        )
 
     def create_multi_by_owner(self, db_session: Session, *, obj_in: List[PaymentCreate], owner_id: str) -> List[
         Payment]:
