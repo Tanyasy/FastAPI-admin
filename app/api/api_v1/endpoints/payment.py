@@ -78,6 +78,7 @@ async def get_payments(
         end_time: datetime = datetime.today(),
         counter_party: Optional[str] = None,
         product_name: Optional[str] = None,
+        trade_type: Optional[str] = None,
         current_user: DBUser = Depends(get_current_active_user)
 ):
     logger.info(f"{current_user.name} start to get payments...")
@@ -87,6 +88,7 @@ async def get_payments(
         end_time=end_time,
         counter_party=counter_party,
         product_name=product_name,
+        trade_type=trade_type,
         owner_id=current_user.id
     )
 

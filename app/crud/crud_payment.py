@@ -22,6 +22,7 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             end_time: datetime = None,
             counter_party: str = None,
             product_name: str = None,
+            trade_type: str = None,
             owner_id: str
     ) -> List[Payment]:
 
@@ -39,6 +40,11 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
         if product_name:
             filter_conditions.append(Payment.product_name.like(f"%{product_name}%"))
 
+        if trade_type:
+            if trade_type == "null":
+                filter_conditions.append(Payment.trade_type == None)
+            else:
+                filter_conditions.append(Payment.trade_type == trade_type)
         # 默认按时间降序排序，要在limit和offset之前，不然会报错
         return (
             db_session.query(self.model).options(joinedload("type").load_only("type_name", "type_flag"))
@@ -102,16 +108,20 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             # 筛选冗余数据
             format_data: pd.DataFrame = data_frame[(data_frame["收/支"].apply(lambda x: str(x) != "/"))]
 
+            time_addition: str = ""
+            if len(format_data["交易时间"][0].split(":")) == 2:
+                time_addition = ":00"
             for index, row in format_data.iterrows():
+
                 data.append({
-                    "money": float(row["金额(元)"].replace("¥", "")),
+                    "money": float(row["金额(元)"].replace("¥", "").replace(",", "")),
                     "counter_party": row["交易对方"].strip(),
                     "payment": row["收/支"].strip(),
                     "product_name": row["商品"].strip(),
                     "trade_sources": row["支付方式"].strip(),
                     "trade_number": row["交易单号"].strip(),
-                    "create_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
-                    "update_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + ":00",
+                    "create_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + time_addition,
+                    "update_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + time_addition,
                 })
         return data
 
