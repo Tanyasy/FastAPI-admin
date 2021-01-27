@@ -150,3 +150,26 @@ def delete_item(
     item = crud.payment.remove(db_session=db, id=id)
     logger.info(f"{current_user.name} delete {item.product_name} success...")
     return item
+
+
+@router.get("/statistics")
+async def get_statistics(
+        db: Session = Depends(get_db),
+        start_time: Optional[datetime] = None,
+        end_time: datetime = datetime.today(),
+        current_user: DBUser = Depends(get_current_active_user)
+):
+    """
+    Get payments statistics data.
+    """
+    logger.info(f"{current_user.name} start to get payments statistics...")
+    records = crud.payment.get_statistics(
+        db,
+        start_time=start_time,
+        end_time=end_time,
+        owner_id=current_user.id
+    )
+
+
+
+    return records

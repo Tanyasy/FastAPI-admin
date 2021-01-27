@@ -68,7 +68,7 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
 
     def update_multi(
             self,
-            db_session:Session,
+            db_session: Session,
             *,
             obj_in: List[PaymentUpdate]
     ):
@@ -112,7 +112,6 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             if len(format_data["交易时间"][0].split(":")) == 2:
                 time_addition = ":00"
             for index, row in format_data.iterrows():
-
                 data.append({
                     "money": float(row["金额(元)"].replace("¥", "").replace(",", "")),
                     "counter_party": row["交易对方"].strip(),
@@ -124,6 +123,49 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
                     "update_time": row["交易时间"].strip().replace(" ", "T").replace("/", "-") + time_addition,
                 })
         return data
+
+    def get_statistics(self,
+                       db_session: Session,
+                       *,
+                       start_time: datetime = None,
+                       end_time: datetime = None,
+                       owner_id: str
+                       ):
+        records = self.get_multi_by_owner(
+            db_session,
+            start_time=start_time,
+            end_time=end_time,
+            owner_id=owner_id
+        )
+        encode_records: List[dict] = jsonable_encoder(records)
+        # format_data: list = []
+        for item in encode_records:
+            trade_type: dict = item.pop("type")
+            if trade_type:
+                item["type_flag"] = trade_type.get("type_flag")
+                item["type_name"] = trade_type.get("type_name")
+
+        # 取指定列数据
+        data_frame: pd.DataFrame = pd.DataFrame(encode_records,
+                                                columns=["create_time", "money", "payment", "type_name", "type_flag"])
+
+        # 筛选类型不为空的数据
+        data_frame = data_frame[pd.notnull(data_frame["type_name"])]
+
+        # 设置创建时间为索引，用于统计数据
+        data_frame["create_time"] = pd.to_datetime(data_frame["create_time"])
+        # 采用applay函数新增列，axis=1会将一行数据传入进行操作
+        data_frame["int_out_money"] = data_frame.apply(lambda x: -x["money"] if x["payment"] == "支出" else x["money"], axis=1)
+        data_frame = data_frame.set_index("create_time")
+
+        data_frame.groupby(["type_name"])["money"].sum()
+
+        # 每个月的收支
+        data_frame.to_period("m").groupby(["create_time", "payment"])["money"].sum()
+
+        # 每个月每个种类的收支
+        data_frame.to_period("m").groupby(["create_time", "type_name"])["int_out_money"].sum()
+
 
 
 payment = CRUBPayment(Payment)
