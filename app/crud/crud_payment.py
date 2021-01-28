@@ -161,10 +161,18 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
         data_frame.groupby(["type_name"])["money"].sum()
 
         # 每个月的收支
-        data_frame.to_period("m").groupby(["create_time", "payment"])["money"].sum()
+        money_data: pd.Series = data_frame.to_period("m").groupby(["create_time", "payment"])["money"].sum()
+        result = [["收/支", "支出", "收入"]]
+        for index, value in money_data.items():
+            if index[1] == "支出":
+                result.append([str(index[0]), round(value, 2)])
+            else:
+                result[-1].append(round(value, 2))
+
+        return result
 
         # 每个月每个种类的收支
-        data_frame.to_period("m").groupby(["create_time", "type_name"])["int_out_money"].sum()
+        # data_frame.to_period("m").groupby(["create_time", "type_name"])["int_out_money"].sum()
 
 
 
