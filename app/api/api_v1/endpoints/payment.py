@@ -157,6 +157,8 @@ async def get_statistics(
         db: Session = Depends(get_db),
         start_time: Optional[datetime] = None,
         end_time: datetime = datetime.today(),
+        select_date: Optional[str] = None,
+        payment: Optional[str] = None,
         current_user: DBUser = Depends(get_current_active_user)
 ):
     """
@@ -167,9 +169,9 @@ async def get_statistics(
         db,
         start_time=start_time,
         end_time=end_time,
+        select_date=select_date,
+        payment=payment,
         owner_id=current_user.id
     )
-
-
 
     return records

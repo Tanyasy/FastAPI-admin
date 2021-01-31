@@ -129,7 +129,9 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
                        *,
                        start_time: datetime = None,
                        end_time: datetime = None,
-                       owner_id: str
+                       owner_id: str,
+                       select_date: str = None,
+                       payment: str = None
                        ):
         records = self.get_multi_by_owner(
             db_session,
@@ -158,16 +160,35 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
         data_frame["int_out_money"] = data_frame.apply(lambda x: -x["money"] if x["payment"] == "支出" else x["money"], axis=1)
         data_frame = data_frame.set_index("create_time")
 
-        data_frame.groupby(["type_name"])["money"].sum()
+        if select_date:
+            # 当select_date不为空时，表示查看详情
+            data_frame = data_frame[select_date]
+            if payment:
+                if payment == "支出":
+                    data_frame = data_frame[data_frame["type_flag"] < 100]
+                else:
+                    data_frame = data_frame[data_frame["type_flag"] >= 100]
 
-        # 每个月的收支
-        money_data: pd.Series = data_frame.to_period("m").groupby(["create_time", "payment"])["money"].sum()
-        result = [["收/支", "支出", "收入"]]
-        for index, value in money_data.items():
-            if index[1] == "支出":
-                result.append([str(index[0]), round(value, 2)])
-            else:
-                result[-1].append(round(value, 2))
+            money_data: pd.Series = data_frame.groupby(["type_name"])["int_out_money"].sum()
+            result = []
+            for index, value in money_data.items():
+                result.append(
+                    {
+                        "name": index,
+                        "value": round(abs(value), 2)
+                    }
+                )
+        else:
+            # data_frame.groupby(["type_name"])["money"].sum()
+
+            # 每个月的收支
+            money_data: pd.Series = data_frame.to_period("m").groupby(["create_time", "payment"])["money"].sum()
+            result = [["收/支", "支出", "收入"]]
+            for index, value in money_data.items():
+                if index[1] == "支出":
+                    result.append([str(index[0]), round(value, 2)])
+                else:
+                    result[-1].append(round(value, 2))
 
         return result
 
