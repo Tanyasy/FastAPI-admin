@@ -139,6 +139,9 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             end_time=end_time,
             owner_id=owner_id
         )
+        if len(records) == 0:
+            return []
+
         encode_records: List[dict] = jsonable_encoder(records)
         # format_data: list = []
         for item in encode_records:
