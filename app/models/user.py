@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, ForeignKey
 
 from app.db.base_class import Base
 
@@ -12,4 +12,4 @@ class User(Base):
     hashed_password = Column(String(64))
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-
+    role_id = Column(String(64), ForeignKey("role.id"))
