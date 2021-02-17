@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
 
@@ -13,3 +14,5 @@ class User(Base):
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
     role_id = Column(String(64), ForeignKey("role.id"))
+
+    role = relationship("Role", primaryjoin='User.role_id==foreign(Role.id)', passive_deletes=True, uselist=False)

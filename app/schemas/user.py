@@ -31,7 +31,7 @@ class UserUpdate(UserBaseInDB):
     password: Optional[str] = Field(None, min_length=5, description="The password length must be greater than 5")
 
 class User(UserBaseInDB):
-    pass
+    role_name: str = ""
 
 class UserInDB(UserBaseInDB):
     hashed_password: str

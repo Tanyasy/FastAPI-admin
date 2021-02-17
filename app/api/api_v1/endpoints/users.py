@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
@@ -34,6 +34,9 @@ async def get_users(
     """
     users = crud.user.get_multi(db, skip=skip, limit=limit)
 
+    for user in users:
+        user.role_name = user.role.name if user.role else ""
+
     return {
         "status": status.HTTP_200_OK,
         "total": len(users),
@@ -62,6 +65,18 @@ async def create_user(
         )
     user = crud.user.create(db, obj_in=user_in)
     return user
+
+@router.delete("/{id}", response_model=User)
+async def delete_user(
+        *,
+        id: str = Path(..., min_length=32, max_length=32),
+        db: Session = Depends(get_db),
+        user: User = Depends(func_user_has_permissions(['deleteUser']))
+):
+    user = crud.user.remove(db, id=id)
+    return user
+
+
 
 
 # 第一个参数为*，则后面参数都为位置参数，不管有没有默认值
