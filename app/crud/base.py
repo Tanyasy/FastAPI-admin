@@ -28,8 +28,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def get(self, db_session: Session, id: int) -> Optional[ModelType]:
         return db_session.query(self.model).filter(self.model.id == id).first()
 
-    def get_multi(self, db_session: Session, *, skip=0, limit=100) -> List[ModelType]:
-        return db_session.query(self.model).offset(skip).limit(limit).all()
+    def get_multi(self, db_session: Session) -> List[ModelType]:
+        return db_session.query(self.model).all()
 
     def create(self, db_session: Session, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)
