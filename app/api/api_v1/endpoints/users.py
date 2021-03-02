@@ -1,21 +1,19 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
 from app.models.role import Role
 from app.models.user import User as DBUser
-from app.schemas.user import User, UserCreate
+from app.schemas.user import User, UserCreate, UserUpdate
 from app import crud
 from app.api.utils.permission import func_user_has_permissions
 from app.api.utils.session import get_current_active_user
 from app.api.utils.page import pagination
 from app.schemas.reponse import PageResponse
 
-
 router = APIRouter()
-
 
 
 # 通过response_model来设置响应模型，可以将对象转化成json数据返回
@@ -63,6 +61,32 @@ async def create_user(
     user = crud.user.create(db, obj_in=user_in)
     return user
 
+
+@router.put("/", response_model=User)
+def update_user_me(
+    *,
+    db: Session = Depends(get_db),
+    id: str = Body(None),
+    name: str = Body(None),
+    role_id: str = Body(None),
+    is_superuser: bool = Body(None),
+    user: User = Depends(func_user_has_permissions(['updateUser']))
+):
+    """
+    Update select user.
+    """
+    user = crud.user.get(db, id)
+    user_in = UserUpdate(**user)
+    if name is not None:
+        user_in.name = name
+    if role_id is not None:
+        user_in.role_id = role_id
+    if is_superuser is not None:
+        user_in.is_superuser = is_superuser
+    user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    return user
+
+
 @router.delete("/{id}", response_model=User)
 async def delete_user(
         *,
@@ -72,8 +96,6 @@ async def delete_user(
 ):
     user = crud.user.remove(db, id=id)
     return user
-
-
 
 
 # 第一个参数为*，则后面参数都为位置参数，不管有没有默认值
