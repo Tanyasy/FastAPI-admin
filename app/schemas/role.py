@@ -21,7 +21,7 @@ class Role(RoleBase):
     id: str
     create_time: datetime
     update_time: datetime
-    permissions: List[Permission] = []
+    permissions: List[Permission] = None
 
     class Config:
         orm_mode = True

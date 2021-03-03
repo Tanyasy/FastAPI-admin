@@ -29,6 +29,8 @@ class UserCreate(UserBase):
 
 class UserUpdate(UserBaseInDB):
     password: Optional[str] = Field(None, min_length=5, description="The password length must be greater than 5")
+    role_id: str = None
+
 
 class User(UserBaseInDB):
     role_name: str = ""

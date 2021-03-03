@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app.api.utils.db import get_db
@@ -76,7 +77,7 @@ def update_user_me(
     Update select user.
     """
     user = crud.user.get(db, id)
-    user_in = UserUpdate(**user)
+    user_in = UserUpdate(**jsonable_encoder(user))
     if name is not None:
         user_in.name = name
     if role_id is not None:

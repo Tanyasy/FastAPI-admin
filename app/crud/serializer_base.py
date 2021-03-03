@@ -5,9 +5,13 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi import Depends, Path
+
+from api.utils.page import pagination
 from app.api.utils.db import get_db
 
 # TypeVar定义一个泛型，类似于T，且可能类型是Base类或其子类
+from schemas.reponse import PageResponse2
+
 ModelType = TypeVar("ModelType", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -18,7 +22,6 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     @classmethod
     def api_model_type(cls) -> Type[ModelType]:
-        # print(cls.__orig_bases__[0].__args__)
         return cls.__orig_bases__[0].__args__[0]
 
     @classmethod
@@ -30,7 +33,6 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def api_update_type(cls) -> Type[UpdateSchemaType]:
 
         return cls.__orig_bases__[0].__args__[2]
-
 
     def __init__(self, model: Type[ModelType]):
         """
@@ -46,18 +48,18 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def register(self, ul: str, route: APIRouter):
         """注册到路由"""
         api_model = self.api_model_type()
-        # print(api_model)
-        # print(self.model)
         api_create = self.api_create_type()
         api_update = self.api_update_type()
 
         @route.get(ul + "/{id}", response_model=api_model)
-        def get(*, id: str = Path(..., title="The ID of the item to get"), db_session: Session = Depends(get_db)) -> Optional[api_model]:
+        def get(*, id: str = Path(..., title="The ID of the item to get"), db_session: Session = Depends(get_db)) -> \
+        Optional[api_model]:
             return db_session.query(self.model).filter(self.model.id == id).first()
 
-        @route.get(ul, response_model=List[api_model])
-        def get_multi(db_session: Session = Depends(get_db), *, skip=0, limit=100) -> List[ModelType]:
-            return db_session.query(self.model).offset(skip).limit(limit).all()
+        @route.get(ul, response_model=PageResponse2[api_model])
+        def get_multi(db_session: Session = Depends(get_db), *, page: int = 0, limit: int = 100):
+            models: List[api_model] = db_session.query(self.model).all()
+            return pagination(models, page, limit)
 
         @route.post(ul, response_model=List[api_model])
         def create_multi(*, obj_in: List[api_create], db_session: Session = Depends(get_db)) -> List[
@@ -71,7 +73,7 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         @route.put(ul, response_model=List[api_model])
         def update(*, db_obj: ModelType, obj_in: api_update, db_session: Session = Depends(get_db)
-        ) -> ModelType:
+                   ) -> ModelType:
             obj_data = jsonable_encoder(db_obj)
             update_data = obj_in.dict(skip_defaults=True)
             for field in obj_data:
@@ -90,4 +92,3 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return obj
 
         return route
-
