@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Generic, TypeVar, Type
 
 from fastapi import APIRouter
@@ -58,7 +59,7 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         @route.get(ul, response_model=PageResponse2[api_model])
         def get_multi(db_session: Session = Depends(get_db), *, page: int = 0, limit: int = 100):
-            models: List[api_model] = db_session.query(self.model).all()
+            models: List[api_model] = db_session.query(self.model).order_by(self.model.create_time.desc()).all()
             return pagination(models, page, limit)
 
         @route.post(ul, response_model=List[api_model])
@@ -71,21 +72,23 @@ class SerializerBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db_session.commit()
             return db_obj_list
 
-        @route.put(ul, response_model=List[api_model])
-        def update(*, db_obj: ModelType, obj_in: api_update, db_session: Session = Depends(get_db)
+        @route.put(ul, response_model=api_model)
+        def update(*, obj_in: api_update, db_session: Session = Depends(get_db)
                    ) -> ModelType:
+            db_obj = db_session.query(self.model).get(obj_in.id)
             obj_data = jsonable_encoder(db_obj)
             update_data = obj_in.dict(skip_defaults=True)
             for field in obj_data:
                 if field in update_data:
                     setattr(db_obj, field, update_data[field])
+            db_obj.update_time = datetime.today()
             db_session.add(db_obj)
             db_session.commit()
             db_session.refresh(db_obj)
             return db_obj
 
-        @route.delete(ul, response_model=api_model)
-        def remove(*, id: str, db_session: Session = Depends(get_db)) -> ModelType:
+        @route.delete(ul+ "/{id}", response_model=api_model)
+        def remove(*, id: str = Path(..., min_length=32, max_length=32), db_session: Session = Depends(get_db)) -> ModelType:
             obj = db_session.query(self.model).get(id)
             db_session.delete(obj)
             db_session.commit()

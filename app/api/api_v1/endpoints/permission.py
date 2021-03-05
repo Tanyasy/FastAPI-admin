@@ -10,4 +10,4 @@ router = APIRouter()
 class CRUDPermission(SerializerBase[Permission, PermissionCreate, PermissionUpdate]):
     pass
 
-router = CRUDPermission(PermissionDB).register('/Permission', router)
+router = CRUDPermission(PermissionDB).register('/permission', router)

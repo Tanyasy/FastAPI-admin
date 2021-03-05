@@ -13,6 +13,7 @@ class PermissionCreate(PermissionBase):
 
 
 class PermissionUpdate(PermissionBase):
+    id: str
     update_time: datetime = datetime.today()
 
 
