@@ -25,3 +25,8 @@ class Role(RoleBase):
 
     class Config:
         orm_mode = True
+
+
+class RoleCreateOrUpdate(RoleBase):
+    id: str = None
+    permissions: list = []

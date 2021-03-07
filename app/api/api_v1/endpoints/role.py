@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi import APIRouter, Depends, Path, HTTPException, Body
 from typing import List
 from sqlalchemy.orm import Session
 
-from app.schemas.role import Role, RoleCreate, RoleUpdate
+from app.schemas.role import Role, RoleCreate, RoleUpdate, RoleCreateOrUpdate
 from app.schemas.permission import Permission
 from app.models.permission import Permission as PermissionDB
 from app.models.role import Role as RoleDB
@@ -20,21 +20,26 @@ class CRUDRole(SerializerBase[Role, RoleCreate, RoleUpdate]):
 router = CRUDRole(RoleDB).register('/role', router)
 
 
-@router.post("/role/{id}", response_model=Role)
+@router.post("/role", response_model=Role)
 async def role_add_permission(*,
-        id: str = Path(..., min_length=32, max_length=32),
-        permission_list: List[str],
+        role_in: RoleCreateOrUpdate,
         db: Session = Depends(get_db)
 ):
     # db_permission_list = []
-    db_permission_list = db.query(PermissionDB).filter(PermissionDB.id.in_(permission_list)).all()
-    role = db.query(RoleDB).filter(RoleDB.id == id).first()
-    if not role:
-        raise HTTPException(
-            status_code=400,
-            detail="The role id is not exists in the system.",
-        )
-    role.permissions = db_permission_list
+    db_permission_list = db.query(PermissionDB).filter(PermissionDB.id.in_(role_in.permissions)).all()
+    if role_in.id:
+        role = db.query(RoleDB).filter(RoleDB.id == role_in.id).first()
+        if not role:
+            raise HTTPException(
+                status_code=400,
+                detail="The role id is not exists in the system.",
+            )
+        role.permissions = db_permission_list
+        role.name = role_in.name
+    else:
+        role = RoleDB(role_in.name)
+        role.permissions = db_permission_list
+        db.add(role)
     db.flush()
     db.commit()
     return role
