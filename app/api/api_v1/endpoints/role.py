@@ -20,7 +20,7 @@ class CRUDRole(SerializerBase[Role, RoleCreate, RoleUpdate]):
 router = CRUDRole(RoleDB).register('/role', router)
 
 
-@router.post("/role", response_model=Role)
+@router.post("/role/one", response_model=Role)
 async def role_add_permission(*,
         role_in: RoleCreateOrUpdate,
         db: Session = Depends(get_db)
@@ -37,7 +37,7 @@ async def role_add_permission(*,
         role.permissions = db_permission_list
         role.name = role_in.name
     else:
-        role = RoleDB(role_in.name)
+        role = RoleDB(name=role_in.name)
         role.permissions = db_permission_list
         db.add(role)
     db.flush()
