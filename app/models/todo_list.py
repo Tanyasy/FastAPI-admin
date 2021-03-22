@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey, Text
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, Integer, SmallInteger, BigInteger
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -11,9 +11,9 @@ class TodoList(Base):
     parent_id = Column(String(32), default=None, index=True, comment="上级任务id")
     user_id = Column(String(32), default=None, index=True, comment="用户id")
     project_id = Column(String(32), default=None, index=True, comment="项目（类型）id")
-    priority = Column(int(1), default=1, comment="优先级")
-    status = Column(int(1), default=0, comment="状态标记，0进行中|2已完成")
-    sort_value = Column(int(11), default=None, comment="排序标记")
+    priority = Column(SmallInteger(), default=1, comment="优先级")
+    status = Column(SmallInteger(), default=0, comment="状态标记，0进行中|2已完成")
+    sort_value = Column(BigInteger(), default=None, comment="排序标记")
 
     is_delete = Column(Boolean(), default=False)
 
