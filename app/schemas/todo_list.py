@@ -8,6 +8,7 @@ class TodoListBase(BaseModel):
     desc: str = ""
     title: str = ""
     parent_id: str = None
+    user_id: Optional[str] = None
 
 
 class TodoListCreate(TodoListBase):
@@ -24,7 +25,6 @@ class TodoListBaseInDB(TodoListUpdate):
     id: str = None
     create_time: datetime = None
     update_time: datetime = None
-    user_id: Optional[str] = None
     sort_value: Optional[int] = None
     is_delete: Optional[bool] = False
 

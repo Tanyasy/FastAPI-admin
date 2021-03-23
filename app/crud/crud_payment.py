@@ -73,7 +73,6 @@ class CRUBPayment(CRUDBase[Payment, PaymentCreate, PaymentUpdate]):
             obj_in: List[PaymentUpdate]
     ):
         obj_data = jsonable_encoder(obj_in)
-        print(obj_data)
         db_session.bulk_update_mappings(self.model, obj_data)
         db_session.flush()
         db_session.commit()

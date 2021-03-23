@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -7,6 +9,17 @@ from app.crud.base import CRUDBase
 
 
 class CRUDTodoList(CRUDBase[TodoList, TodoListCreate, TodoListUpdate]):
+
+    def set_status(self, db_session: Session, *,  id: str, status: int) -> Optional[TodoList]:
+        result = db_session.query(self.model).get(id)
+        if result:
+            result.status = status
+            result.update_time = datetime.today()
+            db_session.add(result)
+            db_session.flush()
+            db_session.commit()
+
+        return result
 
     pass
     # def get_by_name(self, db_session: Session, *, todo_list_name: str) -> Optional[TodoList]:

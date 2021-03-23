@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Body
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Body, Path
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -23,3 +23,44 @@ async def get_todo_list(
     current_user: DBUser = Depends(get_current_active_user),
 ):
     return crud.todo_list.get_multi(db)
+
+
+@router.post("/")
+async def create_todo_list(
+    object_in: TodoListCreate,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_active_user),
+):
+    object_in.user_id = current_user.id
+    return crud.todo_list.create(db, obj_in=object_in)
+
+
+@router.put("/{id}")
+async def update_todo_list(
+    *,
+    id: str = Path(..., min_length=32, max_length=32),
+    object_in: TodoListUpdate,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_active_user),
+):
+    todo_item = crud.todo_list.get(db, id)
+    if not todo_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    return crud.todo_list.update(db, db_obj=todo_item, obj_in=object_in)
+
+"""
+{
+  "create_time": "2021-03-23T21:05:38",
+  "id": "c92eefebbb6a416ebb6610e0289d74b3",
+  "sort_value": null,
+  "priority": 1,
+  "user_id": "ad146aecc5a7453a83eaa08482c8ea45",
+  "title": "这是标题",
+  "update_time": "2021-03-23T21:05:38",
+  "is_delete": false,
+  "status": 0,
+  "project_id": null,
+  "parent_id": null,
+  "desc": "这是一段描述"
+}"""
