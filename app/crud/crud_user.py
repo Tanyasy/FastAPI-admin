@@ -16,7 +16,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db_obj = User(
             email=obj_in.email,
             hashed_password=get_password_hash(obj_in.password),
-            telephone=obj_in.telephone,
+            tiktok_name=obj_in.tiktok_name,
             name=obj_in.name,
             is_superuser=obj_in.is_superuser,
         )

@@ -10,3 +10,6 @@ python-multipart==0.0.5
 email-validator==1.1.2
 loguru==0.5.3
 alembic==1.5.4
+pandas==1.2.4
+uvicorn
+bcrypt

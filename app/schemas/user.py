@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 class UserBase(BaseModel):
     # ...表示这个参数没有默认值，且必填
     name: str = Field(..., min_length=2, max_length=64)
-    telephone: str = Field(..., regex="^((13[0-9])|(14[5|7])|(15([0-3]|[5-9]))|(18[0,5-9]))\d{8}$")
+    tiktok_name: str = Field(..., min_length=2, max_length=64)
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False

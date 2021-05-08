@@ -29,5 +29,6 @@ async def login_access_token(
         "access_token": create_access_token(
             data={"user_id": user.id}, expires_delta=access_token_expires
         ),
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "tiktok_name": user.tiktok_name
     }
