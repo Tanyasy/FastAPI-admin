@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Generic, TypeVar, Type
 
 from fastapi.encoders import jsonable_encoder
@@ -55,6 +56,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
+        db_obj.update_time = datetime.now()
         db_session.add(db_obj)
         db_session.commit()
         db_session.refresh(db_obj)

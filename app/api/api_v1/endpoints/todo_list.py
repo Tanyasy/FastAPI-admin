@@ -20,9 +20,19 @@ router = APIRouter()
 @router.get("/")
 async def get_todo_list(
     db: Session = Depends(get_db),
+    status: int = None,
     current_user: DBUser = Depends(get_current_active_user),
 ):
-    return crud.todo_list.get_multi(db)
+    """
+    获取未完成的
+    获取已完成的
+    获取指定日期的
+    :param db:
+    :param current_user:
+    :return:
+    """
+    logger.info(f"status is {status}")
+    return crud.todo_list.get_multi_by_owner(db, status=status, owner_id=current_user.id)
 
 
 @router.post("/")
@@ -46,7 +56,6 @@ async def update_todo_list(
     todo_item = crud.todo_list.get(db, id)
     if not todo_item:
         raise HTTPException(status_code=404, detail="Item not found")
-
     return crud.todo_list.update(db, db_obj=todo_item, obj_in=object_in)
 
 """
