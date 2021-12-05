@@ -7,20 +7,33 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+import aioredis
+
 
 from core import config
 from app.db.session import Session, engine
 from app.api.api_v1 import api_router
 from app.db.base_class import Base
+from app import scheduler
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title=config.PROJECT_NAME, openapi_url="/api/v1/openapi.json")
 app.include_router(api_router, prefix=config.API_V1_STR)
 
+
+async def get_redis_pool(redis_url) -> aioredis.Redis:
+    pool = aioredis.ConnectionPool.from_url(redis_url, max_connections=10)
+    redis = aioredis.Redis(connection_pool=pool)
+    # pool = aioredis.ConnectionPool.from_url(config.REDIS_URI, max_connection=10)
+    # redis = aioredis.Redis(connection_pool=pool)
+    return redis
+
+
 # 信任域
 origins = [
     "http://localhost",
-    "http://localhost:8081"
+    "http://localhost:8081",
+    "http://192.168.31.181:8081"
 ]
 
 # 后台api允许跨域
@@ -62,6 +75,26 @@ async def db_session_middleware(request: Request, call_next):
     response = await call_next(request)
     request.state.db.close()
     return response
+
+
+@app.on_event('startup')
+async def startup_event():
+    """
+    启动时连接redis,并开启定时任务
+    :return:
+    """
+    app.state.redis = await get_redis_pool(config.REDIS_URI)
+    scheduler.init_scheduler()
+
+
+@app.on_event('shutdown')
+async def shutdown_event():
+    """
+    关闭时关闭redis连接
+    :return:
+    """
+    app.state.redis.close()
+    await app.state.redis.wait_closed()
 
 
 if __name__ == '__main__':

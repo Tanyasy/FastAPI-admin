@@ -1,8 +1,10 @@
 import os
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Body, Path
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Body, Path, Request
+from fastapi.encoders import jsonable_encoder
+import json
 from typing import List, Optional
-
+from aioredis import Redis
 from sqlalchemy.orm import Session
 from app import crud
 from app.api.utils.db import get_db
@@ -19,9 +21,9 @@ router = APIRouter()
 
 @router.get("/")
 async def get_todo_list(
-    db: Session = Depends(get_db),
-    status: int = None,
-    current_user: DBUser = Depends(get_current_active_user),
+        db: Session = Depends(get_db),
+        status: int = None,
+        current_user: DBUser = Depends(get_current_active_user),
 ):
     """
     获取未完成的
@@ -37,26 +39,39 @@ async def get_todo_list(
 
 @router.post("/")
 async def create_todo_list(
-    object_in: TodoListCreate,
-    db: Session = Depends(get_db),
-    current_user: DBUser = Depends(get_current_active_user),
+        request: Request,
+        object_in: TodoListCreate,
+        db: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_active_user),
+
 ):
     object_in.user_id = current_user.id
-    return crud.todo_list.create(db, obj_in=object_in)
+
+    result = crud.todo_list.create(db, obj_in=object_in)
+    # json_str = jsonable_encoder(result)
+    redis = request.app.state.redis  # type: Redis
+    # redis.hset()
+    await redis.set(f"todo:{result.id}", json.dumps(jsonable_encoder(result)))
+    return result
 
 
 @router.put("/{id}")
 async def update_todo_list(
-    *,
-    id: str = Path(..., min_length=32, max_length=32),
-    object_in: TodoListUpdate,
-    db: Session = Depends(get_db),
-    current_user: DBUser = Depends(get_current_active_user),
+        *,
+        id: str = Path(..., min_length=32, max_length=32),
+        object_in: TodoListUpdate,
+        db: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_active_user),
 ):
     todo_item = crud.todo_list.get(db, id)
     if not todo_item:
         raise HTTPException(status_code=404, detail="Item not found")
-    return crud.todo_list.update(db, db_obj=todo_item, obj_in=object_in)
+    result = crud.todo_list.update(db, db_obj=todo_item, obj_in=object_in)
+    if result:
+        doing_list = crud.todo_list.get_multi_by_owner(db, status=0, owner_id=current_user.id)
+        finished_list = crud.todo_list.get_multi_by_owner(db, status=2, owner_id=current_user.id)
+        return {"doingList": doing_list, "finishedList": finished_list}
+
 
 """
 {
