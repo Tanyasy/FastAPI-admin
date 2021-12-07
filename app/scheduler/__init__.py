@@ -20,7 +20,7 @@ def init_scheduler():
         'default': ThreadPoolExecutor(10)  # 最大工作线程数20
         # 'processpool': ThreadPoolExecutor(max_workers=5)  # 最大工作进程数为5
     }
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
     scheduler.configure(jobstores=job_stores, executors=executors, timezone='Asia/Shanghai')
     # 添加定时任务
     scheduler.add_job(main, 'cron', hour=14, minute=5, jobstore="redis")

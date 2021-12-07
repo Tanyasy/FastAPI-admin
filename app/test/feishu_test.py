@@ -69,4 +69,6 @@ def main():
 
 
 if __name__ == '__main__':
-    print(main())
+    a = {}
+    if not a:
+        print("空")

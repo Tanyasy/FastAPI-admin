@@ -3,3 +3,6 @@ __pycache__
 app/log
 dev_tools
 *.log
+/app/build/
+/app/dist/
+/app/main.spec

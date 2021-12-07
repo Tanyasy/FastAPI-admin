@@ -7,11 +7,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi import Depends, Path
 
-from api.utils.page import pagination
+from app.api.utils.page import pagination
 from app.api.utils.db import get_db
 
 # TypeVar定义一个泛型，类似于T，且可能类型是Base类或其子类
-from schemas.reponse import PageResponse2
+from app.schemas.reponse import PageResponse2
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)

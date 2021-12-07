@@ -8,9 +8,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 import aioredis
+import pymysql
 
 
-from core import config
+from app.core import config
 from app.db.session import Session, engine
 from app.api.api_v1 import api_router
 from app.db.base_class import Base
