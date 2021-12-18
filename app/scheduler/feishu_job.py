@@ -49,7 +49,7 @@ def add_record(table_id: str, data: Dict, headers: Dict) -> None:
     return json.loads(result.text).get("code")
 
 
-def main() -> List:
+def feishu_job() -> List:
     headers = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": f"Bearer {get_access_token()}"
@@ -60,7 +60,7 @@ def main() -> List:
         if not data:
             # data为空字典表示已经添加过数据，直接返回
             logger.warning(f"data already added, pass!!!!")
-            return []
+            continue
         headers = {
             "Content-Type": "application/json; charset=utf-8",
             "Authorization": f"Bearer {get_access_token()}"
@@ -68,3 +68,7 @@ def main() -> List:
         result.append(add_record(table_id, data, headers=headers))
     logger.info(f"add data success")
     return result
+
+
+if __name__ == '__main__':
+    feishu_job()

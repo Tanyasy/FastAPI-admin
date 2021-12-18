@@ -6,3 +6,6 @@ APP_TOKEN = "bascniZRdNxF1JYZcqmWtPJSyxh"
 
 MASTER_TABLE_ID = "tblFGJ2zhQn4hae7"
 MEDICINE_TABLE_ID = "tblVp4Gum7lb9YlF"
+
+
+REDIS_URI = "redis://localhost/2"

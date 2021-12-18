@@ -69,6 +69,8 @@ def main():
 
 
 if __name__ == '__main__':
-    a = {}
-    if not a:
-        print("空")
+    import redis
+    import pickle
+    cli = redis.Redis(host="localhost", db=1)
+    data = cli.hget("apscheduler.jobs", "e8a05faabf1047ff8de95d4f244b1123")
+    print(pickle.loads(data))
