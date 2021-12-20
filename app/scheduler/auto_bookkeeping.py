@@ -130,8 +130,10 @@ class AutoBookkeeping:
         time.sleep(3)
 
         # 导入数据
-        pyautogui.moveTo((1269, 1172), duration=0.5)  # 移动鼠标
-        pyautogui.click(clicks=1)  # 点击
+        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "import_data.png"), confidence=0.9)
+        if location:
+            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
+            pyautogui.click(clicks=1)  # 点击
 
         # 导入数据
         pyautogui.moveTo((1180, 734), duration=0.5)  # 移动鼠标
@@ -201,7 +203,6 @@ class AutoBookkeeping:
 
     def format_data(self, row_str: str):
         str_list = row_str.split()
-        print(str_list)
         if len(str_list) == 3:
             trade_type, money, backup = str_list
             backup = self.format_str(backup)
@@ -209,7 +210,7 @@ class AutoBookkeeping:
             trade_type, money, date_time, backup = str_list
         if money.startswith("-") or money.startswith("+"):
             money = money[1:]
-        print(f"{trade_type}, {money}, {backup}")
+        # print(f"{trade_type}, {money}, {backup}")
         return trade_type, money, backup
 
     def record_data(self):
@@ -235,7 +236,7 @@ class AutoBookkeeping:
                 # 下移
                 pyautogui.scroll(-94)
                 continue
-            if "出" in payment_str and "入" in payment_str and not need_to_row:
+            if "出" in payment_str and not need_to_row:
                 break
             trade_type, money, backup = self.format_data(payment_str)
             if trade_type in ["收红包", "商家转账", "退款"]:
@@ -288,7 +289,7 @@ class AutoBookkeeping:
         in_df.to_excel(writer, sheet_name='收入', index=False, header=True)
 
         # 必须运行writer.save()，不然不能输出到本地
-        # writer.save()
+        writer.save()
 
         return 1
 
@@ -324,7 +325,7 @@ def save_data_to_cloud():
     auto_keep = AutoBookkeeping()
     save_to_cloud_flag = auto_keep.redis.get("save_to_cloud")
     if save_to_cloud_flag == b"1":
-        logger.info("The task is successfully executed，pass!!!!")
+        logger.info("The task is successfully executed, pass!!!!")
     else:
         save_to_excel_flag = auto_keep.redis.get("save_to_excel")
         if save_to_excel_flag == b"1":
@@ -341,8 +342,9 @@ def save_data_to_cloud():
 
 
 if __name__ == '__main__':
-    # dump_data_to_excel()
+    dump_data_to_excel()
     # save_data_to_cloud()
-    auto_keep = AutoBookkeeping()
-    auto_keep.show_payment()
-    save_to_excel_flag = auto_keep.record_data()
+    # auto_keep = AutoBookkeeping()
+    # auto_keep.open_chrome()
+    # auto_keep.show_payment()
+    # save_to_excel_flag = auto_keep.record_data()

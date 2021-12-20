@@ -1,6 +1,7 @@
 import os
-import subprocess
 import time
+
+from app.core.logger import logger
 
 
 def auto_cool_job(script_name="auto_cool.bat") -> None:
@@ -12,9 +13,11 @@ def auto_cool_job(script_name="auto_cool.bat") -> None:
     app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     auto_cool_script = os.path.join(app_path, "scripts", script_name)
     os.system(auto_cool_script)
+    logger.info("auto cool success")
 
 
 if __name__ == '__main__':
+    # auto_cool_job()
     auto_cool_job("自动煮饭.bat")
-    # time.sleep(60*60*21)
+    # time.sleep(60*21)
     # auto_cool_job("自动煮饭.bat")
