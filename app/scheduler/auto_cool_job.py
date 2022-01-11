@@ -16,6 +16,12 @@ def auto_cool_job(script_name="auto_cool.bat") -> None:
     logger.info("auto cool success")
 
 
+def auto_cool_potatoes():
+    auto_cool_job("自动煮饭.bat")
+    time.sleep(60*21)
+    auto_cool_job("自动煮饭.bat")
+
+
 if __name__ == '__main__':
     # auto_cool_job()
     auto_cool_job("自动煮饭.bat")

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.api.utils.permission import func_user_has_permissions
 
-from .endpoints import users, login, payment, trade_type, role, permission, todo_list
+from .endpoints import users, login, payment, trade_type, role, permission, todo_list, jobs
 
 
 api_router = APIRouter()
@@ -13,3 +13,4 @@ api_router.include_router(trade_type.router, prefix="/trade_type", tags=["trade_
 api_router.include_router(role.router, tags=["role"], dependencies=[Depends(func_user_has_permissions(["roleCURD"]))])
 api_router.include_router(permission.router, tags=["permission"], dependencies=[Depends(func_user_has_permissions(["permissionCURD"]))])
 api_router.include_router(todo_list.router, prefix="/todo_list", tags=["todo_list"])
+api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])

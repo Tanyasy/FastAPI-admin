@@ -4,7 +4,7 @@ from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor
 
 from app.scheduler.feishu_job import feishu_job
-from app.scheduler.auto_cool_job import auto_cool_job
+from app.scheduler.auto_cool_job import auto_cool_job, auto_cool_potatoes
 from app.scheduler.auto_bookkeeping import dump_data_to_excel, save_data_to_cloud
 from app.core.logger import logger
 
@@ -49,11 +49,13 @@ def init_scheduler():
     scheduler.add_job(auto_cool_job, 'cron', hour=22, minute=25, misfire_grace_time=60*60*3,
                       jobstore="redis", replace_existing=True, id="auto_cool_job")
 
-    scheduler.add_job(dump_data_to_excel, 'cron', hour=12, minute=33, misfire_grace_time=60*60*3,
+    scheduler.add_job(dump_data_to_excel, 'cron', hour=12, minute=2, misfire_grace_time=60*60*3,
                       jobstore="redis", replace_existing=True, id="dump_data_to_excel")
 
     scheduler.add_job(save_data_to_cloud, 'cron', hour=22, minute=20, misfire_grace_time=60*60*3,
                       jobstore="redis", replace_existing=True, id="save_data_to_cloud")
 
     scheduler.start()
+
+    return scheduler
 

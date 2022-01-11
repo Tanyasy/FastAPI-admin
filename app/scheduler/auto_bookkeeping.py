@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 from typing import List
 import re
+from selenium import webdriver
 
 import pyautogui
 import pyperclip
@@ -30,34 +31,37 @@ class AutoBookkeeping:
         :return:
         """
         # 检查账单是否打开
-        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "payment.png"), confidence=0.9)
-
-        if location:
-            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-            pyautogui.click(clicks=1)  # 点击
-        else:
-            # 否，检查微信是否以登录
-            location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "weixin.png"), confidence=0.9)
-            if location:
-                pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-                pyautogui.click(clicks=1)  # 点击
-                location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "login_weixin.png"),
-                                                    confidence=0.9)
-                if location:
-                    pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-                    pyautogui.click(clicks=1)  # 点击
-                    # 等待同步消息
-                    time.sleep(10)
-            else:
-                # 登录微信
-                self.login_weixin()
-                # 等待同步消息
-                time.sleep(10)
+        if not self.__move_to_image("payment.png"):
+            self.show_weixin()
             self.open_payment()
-            # 账单获取等待时间
-            time.sleep(10)
+            self.__wait_show("payment_book.png", 5, 10, click="")
         self.login_flag = True
         self.payment_open_flag = True
+
+    def wait_pulling(self, img="pulling.png"):
+        time.sleep(5)
+        while True:
+            location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, img), confidence=0.9)
+            if location:
+                time.sleep(3)
+            else:
+                break
+
+    def show_weixin(self):
+        """
+        显示微信界面
+        :return:
+        """
+        # 否，检查微信是否以登录
+        if self.__move_to_image("weixin.png"):
+            if self.__move_to_image("login_weixin.png"):
+                # 等待同步消息
+                self.wait_pulling()
+        else:
+            # 登录微信
+            self.login_weixin()
+            # 等待同步消息
+            self.wait_pulling()
 
     def login_weixin(self):
         """
@@ -70,42 +74,41 @@ class AutoBookkeeping:
         # 点击微信
         pyautogui.moveTo((1275, 713), duration=0.5)  # 移动鼠标
         pyautogui.click(clicks=1)  # 点击
+        time.sleep(2)
 
         # 点击登录
-        pyautogui.moveTo((1280, 815), duration=0.5)
-        pyautogui.click(clicks=1)
+        self.__move_to_image("login_weixin.png")
 
     def open_chrome(self):
         """
         打开chrome浏览器
         :return:
         """
-        pyautogui.keyDown("winleft")
-        pyautogui.keyUp('winleft')
+        driver = webdriver.Chrome()
+        driver.get("https://www.sui.com/data/standard_data_import.do")
 
-        # 点击chrome
-        pyautogui.moveTo((600, 913), duration=0.5)  # 移动鼠标
-        pyautogui.click(clicks=1)  # 点击
-        time.sleep(1)
-        # 最大化
-        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "max.png"), confidence=0.9)
-        if location:
-            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-            pyautogui.click(clicks=1)  # 点击
-            time.sleep(1)
+        driver.maximize_window()
 
-        # 打开随手记网页
-        pyautogui.moveTo((548, 103), duration=0.5)  # 移动鼠标
-        pyautogui.click(clicks=1)  # 点击
+        driver.find_element_by_xpath('//*[@id="email"]').send_keys("18860013592")
+        driver.find_element_by_xpath('//*[@id="pwd"]').send_keys("hj3562145")
+        driver.find_element_by_xpath('//*[@id="loginSubmit"]').click()
+
         time.sleep(3)
 
         pyautogui.moveTo((1209, 577), duration=0.5)  # 移动鼠标
         pyautogui.click(clicks=1)  # 点击
 
-        pyautogui.moveTo((725, 60), duration=0.5)  # 移动鼠标
+        pyautogui.moveTo((800, 60), duration=0.5)  # 移动鼠标
         pyautogui.click(clicks=1)  # 点击
         time.sleep(1)
-
+        # 先判断是否是讯飞输入法
+        while True:
+            location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "xunfei.png"), confidence=0.9)
+            if not location:
+                pyautogui.hotkey('shiftleft', 'ctrlleft')
+                time.sleep(1)
+            else:
+                break
         # 判断当前输入法是否是中文输入
         location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "chinese.png"), confidence=0.9)
         if location:
@@ -130,34 +133,44 @@ class AutoBookkeeping:
         time.sleep(3)
 
         # 导入数据
-        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "import_data.png"), confidence=0.9)
-        if location:
-            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-            pyautogui.click(clicks=1)  # 点击
+        self.__move_to_image("import_data.png")
 
         # 导入数据
         pyautogui.moveTo((1180, 734), duration=0.5)  # 移动鼠标
         pyautogui.click(clicks=1)  # 点击
+        time.sleep(10)
+        driver.close()
 
     def open_payment(self):
         """
         打开账单，如果没打开的情况下
         :return:
         """
-        # 点击登录
-        pyautogui.moveTo((815, 400), duration=0.5)
-        pyautogui.click(clicks=1)
+        # 点击微信支付
+        self.__wait_show("weixin_pay.png", start_wait=1)
 
         # 微信弹窗
-        pyautogui.moveTo((1200, 1066), duration=0.5)
-        pyautogui.click(clicks=1)
+        self.__wait_show("my_payment.png", start_wait=1)
 
         # 统计
-        pyautogui.moveTo((1195, 892), duration=0.5)
-        pyautogui.click(clicks=1)
+        self.__wait_show("payment_statistics.png", start_wait=2)
 
-        # 等待
-        time.sleep(3)
+    def close_payment(self):
+        """
+        关闭账单，如果打开的情况下
+        :return:
+        """
+        # 检查账单是否打开
+        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "payment_focus.png"), confidence=0.9)
+        if not location:
+            location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "payment.png"),
+                                                confidence=0.9)
+
+        if location:
+            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
+            pyautogui.rightClick()  # 点击
+
+            self.__wait_show("close_window.png", start_wait=1)
 
     def get_screen_msg(self, x1=1107, y1=607, x2=1514, y2=675) -> str:
         """
@@ -168,17 +181,13 @@ class AutoBookkeeping:
         pyautogui.click(x=1107, y=607, button='middle')
 
         # 打开utool截图工具
-        location = pyautogui.locateCenterOnScreen(image=os.path.join(self.image_path, "shot.png"))
-        pyautogui.moveTo(*location, duration=0.5)
-        pyautogui.click(clicks=1)
-
+        self.__move_to_image("shot.png")
         pyautogui.moveTo((x1, y1), duration=0.5)
         pyautogui.dragTo(x2, y2, duration=0.25)
 
         # 等待分析结果，关闭并复制
-        time.sleep(3)
-        pyautogui.moveTo((1702, 1063), duration=0.5)
-        pyautogui.click(clicks=1)
+        if not self.__wait_show():
+            return ""
 
         return pyperclip.paste()
 
@@ -215,14 +224,25 @@ class AutoBookkeeping:
 
     def record_data(self):
         need_to_row: bool = self.get_date("today.png")
+        yesterday_flag: bool = self.get_date()
+        month_first_day_flag: bool = False
 
         out_list: List = []
         in_list: List = []
-        yesterday: datetime = datetime.now() + timedelta(days=-1)
+        today: datetime = datetime.now()
+        # 每个月首月记账单中间会夹一条统计数据，这是需要特殊处理下
+        if today.day == 1:
+            month_first_day_flag = True
+        yesterday: datetime = today + timedelta(days=-1)
         yesterday_str: str = yesterday.strftime('%Y-%m-%d %I:%M:%S')
         while True:
             payment_str: str = self.get_screen_msg()
+            if not payment_str:
+                break
             # 当需要
+            if not yesterday_flag:
+                return 0
+
             if "昨天" in payment_str:
                 need_to_row: bool = False
                 # 复位
@@ -297,6 +317,59 @@ class AutoBookkeeping:
         im = pyautogui.screenshot(region=(x, y, width, height))
         im.save(os.path.join(self.image_path, f"{name}.png"))
 
+    def appointment(self):
+        # 打开微信
+        if self.__move_to_image("longhua_hospital.png"):
+            self.__move_to_image("smart_hospital.png")
+            self.__move_to_image("internet_hospital.png")
+        else:
+            self.show_weixin()
+            self.__move_to_image("longhua_hospital.png")
+            self.__move_to_image("smart_hospital.png")
+            self.__move_to_image("internet_hospital.png")
+        self.__wait_show("my_appointment.png", start_wait=10, query_times=5)
+        self.__wait_show("go_to_appointment.png", start_wait=5, query_times=8)
+        self.__wait_show("already_read.png", start_wait=5)
+        self.__wait_show("target_office_one.png", start_wait=5)
+        self.__wait_show("target_office_two.png", start_wait=1)
+        self.__wait_show("tomorrow.png", start_wait=5)
+        self.__wait_show("afternoon.png", start_wait=1)
+        self.__wait_show("alread_read_two.png", start_wait=4)
+
+        self.__wait_show("first_gear.png", start_wait=4)
+        # 选一档后查要一段时间，等个10s
+        time.sleep(10)
+        pyautogui.scroll(-500)
+        self.__move_to_image("appointment_time.png")
+        self.__wait_show("confirm.png", start_wait=10)
+
+    def __move_to_image(self, image_name, click="left"):
+        """
+        移动至指定image中心位置，并点击
+        :param image_name: 
+        :return: 
+        """
+        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, image_name),
+                                            confidence=0.95)
+        if location:
+            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
+            if click == "left":
+                pyautogui.click(clicks=1)  # 点击
+            elif click == "right":
+                pyautogui.rightClick()
+            elif click == "middle":
+                pyautogui.middleClick()
+            return pyautogui.center(location)
+
+    def __wait_show(self, img="copy_and_close.png", start_wait=2, query_times=4, click="left"):
+        time.sleep(start_wait)
+        for i in range(query_times):
+            if result := self.__move_to_image(img, click=click):
+                return result
+            else:
+                time.sleep(1)
+                continue
+
 
 # 首先考虑多种情况
 # 1. 昨天没有消费：直接结束，不用记录
@@ -315,9 +388,10 @@ def dump_data_to_excel():
         auto_keep.show_payment()
         save_to_excel_flag = auto_keep.record_data()
         # 写入标记
-        auto_keep.redis.setex("save_to_excel", 12*60*60, save_to_excel_flag)
+        auto_keep.redis.setex("save_to_excel", 12 * 60 * 60, save_to_excel_flag)
         logger.info("Save data to excel success")
 
+    auto_keep.close_payment()
     auto_keep.redis.close()
 
 
@@ -346,5 +420,8 @@ if __name__ == '__main__':
     # save_data_to_cloud()
     # auto_keep = AutoBookkeeping()
     # auto_keep.open_chrome()
+    # auto_keep.appointment()
+    # auto_keep.close_payment()
     # auto_keep.show_payment()
     # save_to_excel_flag = auto_keep.record_data()
+

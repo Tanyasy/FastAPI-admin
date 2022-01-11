@@ -5,6 +5,11 @@ from typing import TypeVar, List, Generic
 T = TypeVar("T")
 
 
+class BasicResponse(BaseModel):
+    status: int
+    msg: str = ""
+
+
 class Response(BaseModel):
     status: int
     msg: str = ""

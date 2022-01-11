@@ -34,7 +34,8 @@ async def get_redis_pool(redis_url) -> aioredis.Redis:
 origins = [
     "http://localhost",
     "http://localhost:8081",
-    "http://192.168.31.181:8081"
+    "http://192.168.31.181:8081",
+    "http://192.168.31.194"
 ]
 
 # 后台api允许跨域
@@ -85,7 +86,7 @@ async def startup_event():
     :return:
     """
     app.state.redis = await get_redis_pool(config.REDIS_URI)
-    scheduler.init_scheduler()
+    app.state.scheduler = scheduler.init_scheduler()
 
 
 @app.on_event('shutdown')
@@ -100,5 +101,4 @@ async def shutdown_event():
 
 if __name__ == '__main__':
     import uvicorn
-
-    uvicorn.run(app, port=config.PORT)
+    uvicorn.run(app, host="0.0.0.0", port=config.PORT)
