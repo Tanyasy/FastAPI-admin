@@ -43,24 +43,11 @@ ping 127.0.0.1 -n 5 >nul
 adb shell input tap 705 258
 echo 点击：703 276
 
-adb shell input swipe 1048 1229 1031 918 
-echo 从：1048 1229 滑动到 1031 918，持续  毫秒
-
-
 echo 延时1秒
-ping 127.0.0.1 -n 2 >nul 
+ping 127.0.0.1 -n 2 >nul
 
-adb shell input tap 568 1782
-echo 点击：547 711
-
-adb shell input swipe 1048 1229 1031 418 
-echo 从：1048 1229 滑动到 1031 918，持续  毫秒
-
-echo 延时1秒
-ping 127.0.0.1 -n 2 >nul 
-
-adb shell input tap 505 1464
-echo 点击：505 1464
+adb shell input tap 477 1452
+echo 点击：505 1364
 
 echo 延时1秒
 ping 127.0.0.1 -n 2 >nul 

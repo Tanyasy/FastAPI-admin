@@ -7,6 +7,7 @@ from typing import Dict, List
 
 from app.scheduler import config
 from app.core.logger import logger
+from app.scheduler.utils import recode_mission_result
 
 
 def get_access_token() -> str:
@@ -55,6 +56,7 @@ def add_record(table_id: str, data: Dict, headers: Dict) -> None:
     return json.loads(result.text).get("code")
 
 
+@recode_mission_result
 def feishu_job() -> List:
     headers = {
         "Content-Type": "application/json; charset=utf-8",

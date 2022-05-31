@@ -14,6 +14,8 @@ from app.schemas.reponse import PageResponse, Response
 from app.models.user import User as DBUser
 from app.api.utils.page import pagination
 from app.core import config
+from app.core.redis_pool import RedisPool
+from app.api.utils.db import get_redis
 from app.core.logger import logger
 
 router = APIRouter()
@@ -39,19 +41,18 @@ async def get_todo_list(
 
 @router.post("/")
 async def create_todo_list(
-        request: Request,
         object_in: TodoListCreate,
         db: Session = Depends(get_db),
         current_user: DBUser = Depends(get_current_active_user),
-
+        redis: RedisPool = Depends(get_redis)
 ):
     object_in.user_id = current_user.id
 
     result = crud.todo_list.create(db, obj_in=object_in)
     # json_str = jsonable_encoder(result)
-    redis = request.app.state.redis  # type: Redis
+    redis_client = redis.select_db(db=0)  # type: Redis
     # redis.hset()
-    await redis.set(f"todo:{result.id}", json.dumps(jsonable_encoder(result)))
+    await redis_client.set(f"todo:{result.id}", json.dumps(jsonable_encoder(result)))
     return result
 
 

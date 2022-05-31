@@ -23,7 +23,8 @@ DATABASE_URI = (
     "mysql+pymysql://root:%s@192.168.31.181:3306/walle"%aes.decrypt(DATABASE_PASSWORD, decode=base64.b64decode)
 )
 
-REDIS_URI = "redis://192.168.31.181"
+REDIS_URI = "redis://localhost"
+REDIS_DB_LIST = [0, 1, 2]
 
 # jwt
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 60 minutes * 24 hours * 8 days = 8 days

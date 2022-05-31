@@ -11,7 +11,7 @@ import aioredis
 import pymysql
 
 
-from app.core import config
+from app.core import config, redis_pool
 from app.db.session import Session, engine
 from app.api.api_v1 import api_router
 from app.db.base_class import Base
@@ -22,12 +22,12 @@ app = FastAPI(title=config.PROJECT_NAME, openapi_url="/api/v1/openapi.json")
 app.include_router(api_router, prefix=config.API_V1_STR)
 
 
-async def get_redis_pool(redis_url) -> aioredis.Redis:
-    pool = aioredis.ConnectionPool.from_url(redis_url, max_connections=10)
-    redis = aioredis.Redis(connection_pool=pool)
-    # pool = aioredis.ConnectionPool.from_url(config.REDIS_URI, max_connection=10)
-    # redis = aioredis.Redis(connection_pool=pool)
-    return redis
+# async def get_redis_pool(redis_url) -> aioredis.Redis:
+#     pool = aioredis.ConnectionPool.from_url(redis_url, max_connections=10)
+#     redis = aioredis.Redis(connection_pool=pool)
+#     # pool = aioredis.ConnectionPool.from_url(config.REDIS_URI, max_connection=10)
+#     # redis = aioredis.Redis(connection_pool=pool)
+#     return redis
 
 
 # 信任域
@@ -85,7 +85,8 @@ async def startup_event():
     启动时连接redis,并开启定时任务
     :return:
     """
-    app.state.redis = await get_redis_pool(config.REDIS_URI)
+    app.state.redis = await redis_pool.RedisPool()
+    # app.state.redis = await get_redis_pool(config.REDIS_URI)
     app.state.scheduler = scheduler.init_scheduler()
 
 
@@ -95,8 +96,8 @@ async def shutdown_event():
     关闭时关闭redis连接
     :return:
     """
-    app.state.redis.close()
-    await app.state.redis.wait_closed()
+    app.state.redis.close_pool()
+    # await app.state.redis.wait_closed()
 
 
 if __name__ == '__main__':

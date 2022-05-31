@@ -17,17 +17,17 @@ ping 127.0.0.1 -n 2 >nul
 
 E:\adb shell am start -n com.xiaomi.smarthome/com.xiaomi.smarthome.SmartHomeMainActivity
 
-ping 127.0.0.1 -n 4 >nul 
+ping 127.0.0.1 -n 10 >nul
 
 E:\adb shell input tap 790 1269
 
-ping 127.0.0.1 -n 4 >nul 
+ping 127.0.0.1 -n 10 >nul
 
 E:\adb shell input tap 703 276
 
 ping 127.0.0.1 -n 2 >nul
 
-E:\adb shell input tap 542 514
+E:\adb shell input tap 542 808
 
 ping 127.0.0.1 -n 2 >nul
 

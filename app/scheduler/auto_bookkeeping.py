@@ -13,7 +13,7 @@ import numpy as np
 
 from app.scheduler import config
 from app.core.logger import logger
-
+from app.scheduler.utils import recode_mission_result
 
 class AutoBookkeeping:
     login_flag = False
@@ -23,7 +23,7 @@ class AutoBookkeeping:
         app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.image_path = os.path.join(app_path, "image")
         self.data_path = os.path.join(app_path, "data")
-        self.redis = redis.Redis(host="localhost", port=6379, db=2)
+        self.redis = redis.Redis(host="localhost", port=6379, db=2, decode_responses=True)
 
     def show_payment(self):
         """
@@ -35,6 +35,7 @@ class AutoBookkeeping:
             self.show_weixin()
             self.open_payment()
             self.__wait_show("payment_book.png", 5, 10, click="")
+
         self.login_flag = True
         self.payment_open_flag = True
 
@@ -143,17 +144,21 @@ class AutoBookkeeping:
 
     def open_payment(self):
         """
-        打开账单，如果没打开的情况下
+        打开账单，如果没打开的情况下，试三次
         :return:
         """
-        # 点击微信支付
-        self.__wait_show("weixin_pay.png", start_wait=1)
+        for i in range(3):
+            # 点击微信支付
+            self.__wait_show("weixin_pay.png", start_wait=1)
 
-        # 微信弹窗
-        self.__wait_show("my_payment.png", start_wait=1)
+            # 微信弹窗
+            self.__wait_show("my_payment.png", start_wait=1)
+            # 统计
+            self.__wait_show("payment_statistics.png", start_wait=2)
 
-        # 统计
-        self.__wait_show("payment_statistics.png", start_wait=2)
+            time.sleep(2)
+            if self.__move_to_image("payment.png", click=""):
+                break
 
     def close_payment(self):
         """
@@ -161,18 +166,10 @@ class AutoBookkeeping:
         :return:
         """
         # 检查账单是否打开
-        location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "payment_focus.png"), confidence=0.9)
-        if not location:
-            location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, "payment.png"),
-                                                confidence=0.9)
+        self.__move_to_image("payment.png", click="right")
+        self.__wait_show("close_window.png", start_wait=1)
 
-        if location:
-            pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
-            pyautogui.rightClick()  # 点击
-
-            self.__wait_show("close_window.png", start_wait=1)
-
-    def get_screen_msg(self, x1=1107, y1=607, x2=1514, y2=675) -> str:
+    def get_screen_msg(self, x1=1040, y1=570, x2=1525, y2=657) -> str:
         """
         截图指定区域的文字信息
         :return:
@@ -181,12 +178,12 @@ class AutoBookkeeping:
         pyautogui.click(x=1107, y=607, button='middle')
 
         # 打开utool截图工具
-        self.__move_to_image("shot.png")
+        self.__wait_show("shot.png", start_wait=1)
         pyautogui.moveTo((x1, y1), duration=0.5)
         pyautogui.dragTo(x2, y2, duration=0.25)
 
         # 等待分析结果，关闭并复制
-        if not self.__wait_show():
+        if not self.__wait_show("copy_and_close.png"):
             return ""
 
         return pyperclip.paste()
@@ -258,7 +255,10 @@ class AutoBookkeeping:
                 continue
             if "出" in payment_str and not need_to_row:
                 break
-            trade_type, money, backup = self.format_data(payment_str)
+            try:
+                trade_type, money, backup = self.format_data(payment_str)
+            except:
+                break
             if trade_type in ["收红包", "商家转账", "退款"]:
                 in_list.append({
                     "交易类型": "收入",
@@ -352,6 +352,8 @@ class AutoBookkeeping:
         location = pyautogui.locateOnScreen(image=os.path.join(self.image_path, image_name),
                                             confidence=0.95)
         if location:
+            if click == "":
+                return pyautogui.center(location)
             pyautogui.moveTo(*pyautogui.center(location), duration=0.5)  # 移动鼠标
             if click == "left":
                 pyautogui.click(clicks=1)  # 点击
@@ -360,6 +362,7 @@ class AutoBookkeeping:
             elif click == "middle":
                 pyautogui.middleClick()
             return pyautogui.center(location)
+        logger.warning(f"{image_name} not found")
 
     def __wait_show(self, img="copy_and_close.png", start_wait=2, query_times=4, click="left"):
         time.sleep(start_wait)
@@ -369,6 +372,8 @@ class AutoBookkeeping:
             else:
                 time.sleep(1)
                 continue
+        logger.warning(f"can't not find {img}")
+
 
 
 # 首先考虑多种情况
@@ -377,39 +382,33 @@ class AutoBookkeeping:
 # 3. 昨天消费了，表更新了，还未更新到记账本，更新处理
 # 4. 都更新了，不用执行
 
+
+@recode_mission_result
 def dump_data_to_excel():
     auto_keep = AutoBookkeeping()
-    save_to_excel_flag = auto_keep.redis.get("save_to_excel")
-    if save_to_excel_flag == b"1":
-        logger.info("The data has been saved in excel，pass!!!!")
-    elif save_to_excel_flag == b"0":
-        logger.info("There was no consumption data yesterday and no need to update， pass!!!!")
-    else:
-        auto_keep.show_payment()
-        save_to_excel_flag = auto_keep.record_data()
-        # 写入标记
-        auto_keep.redis.setex("save_to_excel", 12 * 60 * 60, save_to_excel_flag)
-        logger.info("Save data to excel success")
+
+    auto_keep.show_payment()
+    save_to_excel_flag = auto_keep.record_data()
 
     auto_keep.close_payment()
     auto_keep.redis.close()
+    return save_to_excel_flag
 
 
+@recode_mission_result
 def save_data_to_cloud():
     auto_keep = AutoBookkeeping()
-    save_to_cloud_flag = auto_keep.redis.get("save_to_cloud")
-    if save_to_cloud_flag == b"1":
-        logger.info("The task is successfully executed, pass!!!!")
-    else:
-        save_to_excel_flag = auto_keep.redis.get("save_to_excel")
-        if save_to_excel_flag == b"1":
+    now_day = datetime.now().day
+    save_to_excel_flag = auto_keep.redis.hget("scheduler_status", "dump_data_to_excel")
+    match save_to_excel_flag:
+        case str(now_day):
             auto_keep.open_chrome()
-            # 写入标记
-            auto_keep.redis.setex("save_to_cloud", 12 * 60 * 60, 1)
             logger.info("Save data to cloud success")
-        elif save_to_excel_flag == b"0":
+            return 1
+        case "0":
             logger.info("here was no consumption data yesterday, no need to save data to cloud，pass!!!!")
-        else:
+            return 1
+        case _:
             logger.error("The Excel data is not updated, and the task fails to be executed")
 
     auto_keep.redis.close()
@@ -424,4 +423,6 @@ if __name__ == '__main__':
     # auto_keep.close_payment()
     # auto_keep.show_payment()
     # save_to_excel_flag = auto_keep.record_data()
+    # auto_keep.close_payment()
+    # auto_keep.open_chrome()
 
