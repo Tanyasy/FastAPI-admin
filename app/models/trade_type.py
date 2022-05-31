@@ -7,6 +7,6 @@ class TradeType(Base):
     type_name = Column(String(8), comment="交易类型名称")
     type_flag = Column(Integer, unique=True, comment="类型的唯一标记, 10以下为收入类型，10以上为消费类型")
 
-    __mapper_args__ = {
-        "order_by": type_flag
-    }
+    # __mapper_args__ = {
+    #     "order_by": type_flag
+    # }
